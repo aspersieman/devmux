@@ -6,7 +6,7 @@ import (
 )
 
 func tmux(args ...string) error {
-	logger(fmt.Sprintf("tmux %s\n", args), LevelDebug)
+	Debug(fmt.Sprintf("tmux %s", args))
 	cmd := exec.Command("tmux", args...)
 	return cmd.Run()
 }
@@ -21,6 +21,7 @@ func tmuxSend(target, command string) error {
 }
 
 func tmuxSplit(target string, vertical bool) error {
+
 	flag := "-h"
 	if vertical {
 		flag = "-v"

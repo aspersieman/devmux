@@ -133,13 +133,13 @@ func main() {
 
 			// Additional panes
 			for i := 1; i < len(c.Panes); i++ {
-				tmuxSplit(target, false) // horizontal split
+				tmuxSplit(target, true) // horizontal split
 				paneTarget := fmt.Sprintf("%s.%d", target, i)
 				tmuxSend(paneTarget, fmt.Sprintf("%s && %s", baseCmd, c.Panes[i].Cmd))
 			}
 
 			// Nice layout
-			tmux("select-layout", "-t", target, "even-horizontal")
+			tmux("select-layout", "-t", target, "even-vertical")
 			continue
 		}
 
