@@ -1,0 +1,25 @@
+session: forestwatch
+
+repos:
+  - name: api
+    path: ~/dev/forestwatch/api
+    editor: nvim
+
+  - name: ui
+    path: ~/dev/forestwatch/ui
+    editor: nvim
+
+commands:
+  - name: docker
+    path: ~/dev/forestwatch
+    cmd: docker compose up
+
+  - name: logs
+    path: ~/dev/forestwatch
+    cmd: tail -f logs/app.log
+
+  - name: docker-hugin
+    path: ~/src/repos/hugin-go
+    panes:
+      - cmd: docker compose up
+      - cmd: docker compose logs -f
