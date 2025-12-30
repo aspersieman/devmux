@@ -57,6 +57,9 @@ func main() {
 		false,
 		"kill and recreate tmux session if it exists",
 	)
+	flag.Usage = func() {
+		fmt.Println(usage())
+	}
 
 	flag.Parse()
 
