@@ -11,7 +11,7 @@ README.md
 
 - Declarative tmux session setup using YAML
 - One tmux window per git repository
-- Automatically opens Neovim in each repository
+- Automatically opens editor in each repository
 - Optional command windows (Docker, logs, watchers, etc.)
 - Multi-pane layouts per window
 - Session reuse or forced recreation
@@ -111,7 +111,7 @@ commands:
 2. Each repository gets its own tmux window
    - The window title is set to the repo name
    - The working directory is set
-   - Neovim is launched automatically
+   - Editor (e.g neovim) is launched automatically
 3. Command windows can:
    - Run a single command
    - Or create multiple panes, each running its own command
