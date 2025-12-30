@@ -28,22 +28,12 @@ func parseLogLevel(s string) (Level, error) {
 	}
 }
 
-func usage() string {
-	return fmt.Sprintf(`devmux %s
-
-Usage:
-  devmux [options] <config.yml>
-
-Options:
-  --log-level <level>   Set log level (debug, info, warn, error)
-  --force               Kill and recreate tmux session if it exists
-
-Examples:
-  devmux apollo.yml
-  devmux --log-level debug apollo.yml
-  devmux --force apollo.yml
-  devmux --force --log-level warn apollo.yml
-`, version)
+func usage() {
+	fmt.Fprintf(os.Stderr, "devmux %s\n\n", version)
+	fmt.Fprintf(os.Stderr, "Usage:\n")
+	fmt.Fprintf(os.Stderr, "  devmux [options] <config.yml>\n\n")
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	flag.PrintDefaults()
 }
 
 func main() {
@@ -52,16 +42,26 @@ func main() {
 		"info",
 		"log level: debug, info, warn, error",
 	)
+
 	forceFlag := flag.Bool(
 		"force",
 		false,
 		"kill and recreate tmux session if it exists",
 	)
-	flag.Usage = func() {
-		fmt.Println(usage())
-	}
 
+	versionFlag := flag.Bool(
+		"version",
+		false,
+		"print version and exit",
+	)
+
+	flag.Usage = usage
 	flag.Parse()
+
+	if *versionFlag {
+		fmt.Println(version)
+		return
+	}
 
 	level, err := parseLogLevel(*logLevelFlag)
 	if err != nil {
@@ -71,7 +71,7 @@ func main() {
 	LogLevel = level
 
 	if flag.NArg() < 1 {
-		fmt.Println(usage())
+		usage()
 		os.Exit(1)
 	}
 
@@ -81,7 +81,7 @@ func main() {
 	session := cfg.Session
 	if session == "" {
 		Err("session name is required")
-		fmt.Println(usage())
+		usage()
 		os.Exit(1)
 	}
 
