@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	yaml "gopkg.in/yaml.v3"
@@ -85,6 +84,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	Info(fmt.Sprintf("Preparing tmux session: %s", session))
+
 	if tmuxHasSession(session) {
 		if *forceFlag {
 			logger("killing existing tmux session", LevelWarn)
@@ -94,12 +95,6 @@ func main() {
 			return
 		}
 	}
-
-	// Session does not exist, create it
-	// if err := tmux("new-session", "-d", "-s", session); err != nil {
-	// 	Err(fmt.Sprintf("failed to create session: %v\r", err))
-	// 	os.Exit(1)
-	// }
 
 	if len(cfg.Repos) == 0 {
 		Err("no repos defined in config")
@@ -185,7 +180,8 @@ func main() {
 
 	// Focus first window and attach
 	tmux("select-window", "-t", session+":1")
-	tmux("attach", "-t", session)
+	Info("✅ Done. Attaching to session...")
+	tmuxAttach(session)
 }
 
 func loadConfig(path string) Config {
@@ -200,11 +196,6 @@ func loadConfig(path string) Config {
 		log.Fatal(err)
 	}
 	return cfg
-}
-
-func tmuxHasSession(session string) bool {
-	cmd := exec.Command("tmux", "has-session", "-t", session)
-	return cmd.Run() == nil
 }
 
 func expand(path string) string {

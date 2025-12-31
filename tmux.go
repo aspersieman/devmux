@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -27,4 +28,32 @@ func tmuxSplit(target string, vertical bool) error {
 		flag = "-v"
 	}
 	return tmux("split-window", flag, "-t", target)
+}
+
+func tmuxAttach(session string) {
+	if os.Getenv("TMUX") != "" {
+		// Already inside tmux
+		cmd := exec.Command("tmux", "switch-client", "-t", session)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		_ = cmd.Run()
+		return
+	}
+
+	// Not inside tmux → attach normally
+	cmd := exec.Command("tmux", "attach", "-t", session)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		Err(fmt.Sprintf("failed to attach to tmux: %v", err))
+		os.Exit(1)
+	}
+}
+
+func tmuxHasSession(session string) bool {
+	cmd := exec.Command("tmux", "has-session", "-t", session)
+	return cmd.Run() == nil
 }
