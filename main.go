@@ -96,20 +96,54 @@ func main() {
 	}
 
 	// Session does not exist, create it
-	if err := tmux("new-session", "-d", "-s", session); err != nil {
-		Err(fmt.Sprintf("failed to create session: %v\r", err))
+	// if err := tmux("new-session", "-d", "-s", session); err != nil {
+	// 	Err(fmt.Sprintf("failed to create session: %v\r", err))
+	// 	os.Exit(1)
+	// }
+
+	if len(cfg.Repos) == 0 {
+		Err("no repos defined in config")
 		os.Exit(1)
 	}
 
-	// Repos, editor windows
-	for i, repo := range cfg.Repos {
-		target := fmt.Sprintf("%s:%d", session, i+1)
+	firstRepo := cfg.Repos[0]
 
-		tmux("new-window",
+	// Create session WITH first window
+	if err := tmux(
+		"new-session",
+		"-d",
+		"-s", session,
+		"-n", firstRepo.Name,
+	); err != nil {
+		Err(fmt.Sprintf("failed to create session: %v", err))
+		os.Exit(1)
+	}
+
+	// Now safely send keys to pane 0
+	target := fmt.Sprintf("%s:0.0", session)
+	path := expand(firstRepo.Path)
+	cmd := fmt.Sprintf("cd %s && %s .", path, firstRepo.Editor)
+	tmuxSend(target, cmd)
+
+	// Create session WITH first window
+	tmux(
+		"new-session",
+		"-d",
+		"-s", session,
+		"-n", firstRepo.Name,
+	)
+
+	// Repos, editor windows
+	for i := 1; i < len(cfg.Repos); i++ {
+		repo := cfg.Repos[i]
+
+		tmux(
+			"new-window",
 			"-t", session,
 			"-n", repo.Name,
 		)
 
+		target := fmt.Sprintf("%s:%d.0", session, i)
 		path := expand(repo.Path)
 		cmd := fmt.Sprintf("cd %s && %s .", path, repo.Editor)
 		tmuxSend(target, cmd)
