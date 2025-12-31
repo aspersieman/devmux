@@ -1,28 +1,86 @@
 # This workflow will build a golang project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-name: Go
+name: Build and Release
 
 on:
   push:
-    branches: [ "dev" ]
-  pull_request:
-    branches: [ "dev" ]
+    tags:
+      - 'v*'  # Trigger on tags like v1.0.0
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.20'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.20
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build, package, and checksum
+        run: |
+          mkdir -p dist
+          ext=""
+          archive_ext=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            ext=".exe"
+            archive_ext=".zip"
+          else
+            archive_ext=".tar.gz"
+          fi
 
-    - name: Test
-      run: go test -v ./...
+          binary_name="devmux-${{ matrix.goos }}-${{ matrix.goarch }}${ext}"
+          archive_name="devmux-${{ matrix.goos }}-${{ matrix.goarch }}${archive_ext}"
+
+          echo "Building $binary_name"
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/$binary_name
+
+          # Package binary
+          cd dist
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            zip "$archive_name" "$binary_name"
+          else
+            tar czf "$archive_name" "$binary_name"
+          fi
+
+          # Generate SHA256 checksum
+          shasum -a 256 "$archive_name" > "$archive_name.sha256"
+          cd ..
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload packaged binaries to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/devmux-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.zip' || '.tar.gz' }}
+          asset_name: devmux-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.zip' || '.tar.gz' }}
+          asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload checksum files to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/devmux-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.zip.sha256' || '.tar.gz.sha256' }}
+          asset_name: devmux-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.zip.sha256' || '.tar.gz.sha256' }}
+          asset_content_type: text/plain
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
