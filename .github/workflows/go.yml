@@ -33,6 +33,7 @@ jobs:
       - name: Build, package, and checksum
         run: |
           mkdir -p dist
+          go mod tidy  # ensures dependencies are downloaded
           ext=""
           archive_ext=""
           if [ "${{ matrix.goos }}" = "windows" ]; then
@@ -51,9 +52,9 @@ jobs:
           # Package binary
           cd dist
           if [ "${{ matrix.goos }}" = "windows" ]; then
-          zip "$archive_name" "$binary_name"
+            zip "$archive_name" "$binary_name"
           else
-          tar czf "$archive_name" "$binary_name"
+            tar czf "$archive_name" "$binary_name"
           fi
 
           # Generate SHA256 checksum
