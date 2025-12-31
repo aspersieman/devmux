@@ -27,10 +27,10 @@ jobs:
           ext=""
           archive_ext=""
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            ext=".exe"
-            archive_ext=".zip"
+          ext=".exe"
+          archive_ext=".zip"
           else
-            archive_ext=".tar.gz"
+          archive_ext=".tar.gz"
           fi
 
           binary_name="devmux-${{ matrix.goos }}-${{ matrix.goarch }}${ext}"
@@ -42,9 +42,9 @@ jobs:
           # Package binary
           cd dist
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            zip "$archive_name" "$binary_name"
+          zip "$archive_name" "$binary_name"
           else
-            tar czf "$archive_name" "$binary_name"
+          tar czf "$archive_name" "$binary_name"
           fi
 
           # Generate SHA256 checksum
